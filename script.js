@@ -15,7 +15,7 @@ app.use(express.json());
 
 // Creamos una ruta raíz que devuelve un archivo (index.html)
 app.get("/", (req, res) => {
-    res.sendFile(__dirname + "/index.html");
+    res.sendFile("index.html", { root: "./" });
 })
 
 // Creamos una ruta para agregar una canción.

@@ -11,14 +11,13 @@ const pool = new Pool({
     port: process.env.DB_PORT
 });
 
-const tabla = 'canciones';
 // Función para insertar registros en la tabla repertorio
 
 async function agregar (titulo, artista, tono) {
     console.log("Valores recibidos: ", titulo, artista, tono);
     try {
         const result = await pool.query({ 
-            text: 'INSERT INTO ${tabla} (titulo, artista, tono) VALUES ($1, $2, $3) RETURNING *',
+            text: 'INSERT INTO canciones (titulo, artista, tono) VALUES ($1, $2, $3) RETURNING *',
             values: [titulo, artista, tono]
         });
         console.log("Registro agregado: ", result.rows[0]);
@@ -30,14 +29,14 @@ async function agregar (titulo, artista, tono) {
 
 //Función para mostrar todos los registros
 async function todos () {
-    const result = await pool.query("SELECT * FROM ${tabla}");
+    const result = await pool.query("SELECT * FROM canciones");
     return result.rows;
 }
 
 //función para eliminar un registro según su nombre
 async function eliminar(id) {
     try {
-        const result = await pool.query("DELETE FROM ${tabla} WHERE id = $1 RETURNING *", [id]);
+        const result = await pool.query("DELETE FROM canciones WHERE id = $1 RETURNING *", [id]);
         if (result.rows.length > 0) {
             return { mensaje: `El registro con ID ${id} se ha eliminado` };
         } else {
@@ -49,8 +48,8 @@ async function eliminar(id) {
 }
 
 //función para editar un registro
-async function editar (titulo, artista, tono) {
-    const result = await pool.query("UPDATE ${tabla} SET titulo = $1, artista = $2, tono = $3 WHERE id = $4 RETURNING *", [titulo, artista, tono, id]);
+async function editar (id, titulo, artista, tono) {
+    const result = await pool.query("UPDATE canciones SET titulo = $1, artista = $2, tono = $3 WHERE id = $4 RETURNING *", [titulo, artista, tono, id]);
     return result.rows[0];
 }
 
