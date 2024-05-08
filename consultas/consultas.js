@@ -1,66 +1,57 @@
-const { Pool } = require('pg');
+import pkg from 'pg';
+import 'dotenv/config';
+const { Pool } = pkg;
+import { manejoErrores } from '../errores/moduloErrores.js';
 
 const pool = new Pool({
-    user: 'gaboleiva',
-    host: 'localhost',
-    database: 'repertorio',
-    password: '',
-    port: 5432
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASS,
+    port: process.env.DB_PORT
 });
 
-// Funcion para insertar registros en la tabla repertorio
+const tabla = 'canciones';
+// Función para insertar registros en la tabla repertorio
 
 async function agregar (titulo, artista, tono) {
     console.log("Valores recibidos: ", titulo, artista, tono);
     try {
         const result = await pool.query({ 
-            text: 'INSERT INTO canciones (titulo, artista, tono) VALUES ($1, $2, $3) RETURNING *',
+            text: 'INSERT INTO ${tabla} (titulo, artista, tono) VALUES ($1, $2, $3) RETURNING *',
             values: [titulo, artista, tono]
         });
         console.log("Registro agregado: ", result.rows[0]);
         return result.rows[0];
     } catch (error) {
-        console.error("Error al agregar la canción:", error);
-        throw error; // relanza el error para que pueda ser manejado en el archivo index.js
+        return manejoErrores(error, pool, tabla);
     }
 }
 
-//Funcion para ver todos los ingresos
+//Función para mostrar todos los registros
 async function todos () {
-    const result = await pool.query("SELECT * FROM canciones");
+    const result = await pool.query("SELECT * FROM ${tabla}");
     return result.rows;
 }
 
-//funcion para eliminar un registro según su nombre recibido como un query.string
+//función para eliminar un registro según su nombre
 async function eliminar(id) {
     try {
-        const result = await pool.query("DELETE FROM canciones WHERE id = $1 RETURNING *", [id]);
+        const result = await pool.query("DELETE FROM ${tabla} WHERE id = $1 RETURNING *", [id]);
         if (result.rows.length > 0) {
-            return { mensaje: `Se eliminó el registro con ID ${id}` }; // Devuelve un mensaje indicando que se eliminó el registro
+            return { mensaje: `El registro con ID ${id} se ha eliminado` };
         } else {
-            return { mensaje: 'El registro no se encontró o no se pudo eliminar.' }; // Mensaje si no se encuentra el registro
+            return { mensaje: 'El registro no se eliminó correctamente o no existe.' };
         }
     } catch (error) {
-        console.error("Error al eliminar la canción:", error);
-        throw error;
+        return manejoErrores(error, pool, tabla);
     }
 }
 
-//funcion para editar un registro
+//función para editar un registro
 async function editar (titulo, artista, tono) {
-    const result = await pool.query("UPDATE canciones SET titulo = $1, artista = $2, tono = $3 WHERE id = $4 RETURNING *", [titulo, artista, tono, id]);
+    const result = await pool.query("UPDATE ${tabla} SET titulo = $1, artista = $2, tono = $3 WHERE id = $4 RETURNING *", [titulo, artista, tono, id]);
     return result.rows[0];
 }
 
-// //funcion para consultar por un registro
-// async function consultar (nombre) {
-//     const result = await pool.query("SELECT * FROM canciones WHERE titulo = $1", [titulo]);
-//     if (result.rows.length > 0) {
-//         return { encontrado: true, titulo: result.rows[0] };
-//     } else {
-//         return { encontrado: false };
-//     }
-// }
-
-
-module.exports = {agregar, todos, eliminar, editar};
+export {agregar, todos, eliminar, editar};

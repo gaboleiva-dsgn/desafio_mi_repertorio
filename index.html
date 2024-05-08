@@ -18,25 +18,25 @@
         <div class="form-group row">
           <label for="name" class="col-sm-2 col-form-label">Canción:</label>
           <div class="col-sm-10">
-            <input type="text" class="form-control" id="cancion" value="A dios le pido" />
+            <input type="text" class="form-control" id="cancion" placeholder="Canción" />
           </div>
         </div>
         <div class="form-group row">
           <label for="email" class="col-sm-2 col-form-label">Artista: </label>
           <div class="col-sm-10">
-            <input type="text" class="form-control" id="artista" value="Juanes" />
+            <input type="text" class="form-control" id="artista" placeholder="Artista" />
           </div>
         </div>
         <div class="form-group row">
           <label for="rut" class="col-sm-2 col-form-label">Tono:</label>
           <div class="col-sm-10">
-            <input type="text" class="form-control" id="tono" value="Em" />
+            <input type="text" class="form-control" id="tono" placeholder="Tono" />
           </div>
         </div>
         <button onclick="nuevaCancion()" id="agregar" class="m-auto btn btn-success">
           Agregar
         </button>
-        <button onclick="editarCancion()" id="editar" class="m-auto btn btn-info">
+        <button onclick="editarCancion()" id="editar" class="m-auto btn btn-info" style="display: none;">
           Editar
         </button>
       </div>
@@ -78,18 +78,19 @@
 <script>
   let url = "/cancion";
   let tbody = document.getElementById("cuerpo");
-  let cancion = document.getElementById("cancion");
-  let artista = document.getElementById("artista");
-  let tono = document.getElementById("tono");
+  let cancionInput = document.getElementById("cancion");
+  let artistaInput = document.getElementById("artista");
+  let tonoInput = document.getElementById("tono");
 
   let canciones = [];
+  let idCancionEditar = null;
+
   window.onload = getData();
 
   async function getData() {
     await axios.get(url + "es").then((data) => {
       canciones = data.data;
       tbody.innerHTML = "";
-      console.log(canciones)
       canciones.forEach((c, i) => {
         tbody.innerHTML += `
         <tr>
@@ -98,30 +99,21 @@
           <td>${c.artista}</td>
           <td>${c.tono}</td>
           <td>
-            <button class="btn btn-warning" onclick="prepararCancion(${i},'${c.id
-          }')">Editar</button>
-            <button class="btn btn-danger" onclick="eliminarCancion(${i},'${c.id
-          }')">Eliminar</button>
+            <button class="btn btn-warning" onclick="prepararCancion(${i},'${c.id}')">Editar</button>
+            <button class="btn btn-danger" onclick="eliminarCancion(${i},'${c.id}')">Eliminar</button>
           </td>
-        </tr>
-      `;
+        </tr>`;
       });
     });
-    cancion.value = "";
-    artista.value = "";
-    tono.value = "";
+    limpiarCampos();
   }
 
   function nuevaCancion() {
-    cancion;
-    artista;
-    tono;
     let data = {
-      titulo: cancion.value,
-      artista: artista.value,
-      tono: tono.value,
+      titulo: cancionInput.value,
+      artista: artistaInput.value,
+      tono: tonoInput.value,
     };
-    console.log(data);
     axios.post(url, data).then(() => getData());
   }
 
@@ -133,27 +125,37 @@
   }
 
   function prepararCancion(i, id) {
-    cancion.value = canciones[i].titulo;
-    artista.value = canciones[i].artista;
-    tono.value = canciones[i].tono;
-    document
-      .getElementById("editar")
-      .setAttribute("onclick", `editarCancion('${id}')`);
+    idCancionEditar = id;
+    cancionInput.value = canciones[i].titulo;
+    artistaInput.value = canciones[i].artista;
+    tonoInput.value = canciones[i].tono;
     document.getElementById("agregar").style.display = "none";
     document.getElementById("editar").style.display = "block";
   }
 
-  function editarCancion(id) {
-    axios
-      .put(url + "/" + id, {
-        titulo: cancion.value,
-        artista: artista.value,
-        tono: tono.value,
-      })
-      .then(() => {
-        getData();
-        document.getElementById("agregar").style.display = "block";
-        document.getElementById("editar").style.display = "none";
-      });
+  function editarCancion() {
+    if (!idCancionEditar) {
+      console.error("No se ha seleccionado ninguna canción para editar");
+      return;
+    }
+    axios.put(url + "/" + idCancionEditar, {
+      titulo: cancionInput.value,
+      artista: artistaInput.value,
+      tono: tonoInput.value,
+    }).then(() => {
+      getData();
+      limpiarCampos();
+    }).catch((error) => {
+      console.error("Error al editar la canción:", error);
+    });
+  }
+
+  function limpiarCampos() {
+    cancionInput.value = "";
+    artistaInput.value = "";
+    tonoInput.value = "";
+    idCancionEditar = null;
+    document.getElementById("agregar").style.display = "block";
+    document.getElementById("editar").style.display = "none";
   }
 </script>
